@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 export const metadata: Metadata = {
   title: "ICU Handover & Bed Management System",
   description: "Spatial ICU bed dashboard, SBAR handover, ward analytics and print engine.",
-  icons: { icon: "/heartbeat.svg" },
+  icons: { icon: "/Havaal/heartbeat.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
