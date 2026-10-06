@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100; }
+
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+
+/* ---- Print engine ---- */
+@media print {
+  .no-print { display: none !important; }
+  html { color-scheme: light; }
+  body { background: #fff !important; color: #000 !important; }
+  .print-area { display: block !important; }
+  @page { size: A4; margin: 12mm; }
+}
+
+@media screen {
+  .print-only { display: none !important; }
+}
+@media print {
+  .print-only { display: block !important; }
+  .screen-only { display: none !important; }
+}
+
+.print-grid, .print-grid th, .print-grid td {
+  border: 1px solid #000 !important;
+}
+.page-break { page-break-after: always; break-after: page; }
+.print-cell { vertical-align: top; }
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up, .animate-modal, .animate-fade, .animate-heartbeat { animation: none; }
+}
+
+/* Entrance + modal motion */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fade-up { animation: fade-up 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.animate-modal { animation: modal-in 0.18s ease-out; }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade { animation: fade-in 0.15s ease-out; }
+
+/* Screen preview: show the two print pages as separate sheets */
+@media screen {
+  .print-page {
+    background: #fff;
+    box-shadow: 0 1px 5px rgba(15, 23, 42, 0.14);
+    margin-bottom: 56px;
+    padding: 12mm;
+    aspect-ratio: 210 / 297;
+  }
+}
+
+/* Heartbeat pulse for the header logo icon */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.18); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.14); }
+  56% { transform: scale(1); }
+}
+.animate-heartbeat {
+  animation: heartbeat 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Vertical sidebar labels for the SBAR print grid (Word textDirection btLr: bottom-to-top) */
+.doc-vtext {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.print-area, .print-area * {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
