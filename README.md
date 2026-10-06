@@ -1,5 +1,7 @@
 # ICU Handover & Bed Management System
 
+**Live site:** https://nooryoosuf.github.io/Havaal/
+
 Clinical ICU web application built with **Next.js (App Router)**, **Tailwind CSS**, **Lucide React**, and **shadcn/ui-style components**.
 
 ## Modules
