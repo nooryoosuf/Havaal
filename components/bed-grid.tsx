@@ -83,6 +83,8 @@ function BedCard({ bedNo, onAdmit, onForm, onHistory, onPrint, onDischarge }: {
   );
 }
 
+const MOBILE_ORDER: BedNo[] = ["Bed 1", "Bed 2", "Bed 3", "Bed 4", "Bed 5", "Bed 6", "Bed 7", "Bed 8", "Bed 9", "Isolation Bed"];
+
 export default function BedGrid(props: {
   onAdmit: (b: BedNo) => void;
   onForm: (b: BedNo) => void;
@@ -92,7 +94,12 @@ export default function BedGrid(props: {
 }) {
   return (
     <div>
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Mobile: single sequential list Bed 1–10 */}
+      <div className="flex flex-col gap-4 md:hidden">
+        {MOBILE_ORDER.map((b, i) => <GlowCard key={b} className="animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}><BedCard bedNo={b} {...props} /></GlowCard>)}
+      </div>
+      {/* Desktop: spatial two-column layout */}
+      <div className="hidden gap-4 md:grid md:grid-cols-2">
         <div className="flex flex-col gap-4">
           {BED_ORDER_LEFT.map((b, i) => <GlowCard key={b} className="animate-fade-up" style={{ animationDelay: `${i * 60}ms` }}><BedCard bedNo={b} {...props} /></GlowCard>)}
         </div>

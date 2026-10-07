@@ -107,7 +107,7 @@ export default function HomePage() {
       </main>
 
       {/* Bottom navigation (mobile) */}
-      <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/92 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/90 md:hidden">
+      <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/90 md:hidden">
         <div className="grid grid-cols-4">
           {([["beds", "Beds", BedDouble], ["stats", "Stats", BarChart3], ["archive", "Archive", Archive], ["discharges", "Out", DoorOpen]] as const).map(([k, label, Icon]) => {
             const active = mainTab === k;
