@@ -13,7 +13,7 @@ export interface Patient {
   sex: Sex;
   hospitalNo: string;
   diagnosis: string;
-  category: "Respiratory" | "Sepsis" | "Post-op" | "Neuro" | "Cardiac" | "Other";
+  category: string; // admission category — uses the specialty list
   specialty: string; // dashboard display only — never printed or added to SBAR
   tags: string[];
   admittedAt: string; // ISO

@@ -80,6 +80,7 @@ body { @apply bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:tex
 .doc-vtext {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
+  width: fit-content;
   margin: 0 auto;
   text-align: center;
 }

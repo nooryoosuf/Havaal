@@ -16,14 +16,13 @@ export default function AdmitDialog({ bedNo, initialHospNo, onClose, onAdmitted 
   const [sex, setSex] = useState("M");
   const [hospitalNo, setHospitalNo] = useState(initialHospNo ?? "");
   const [diagnosis, setDiagnosis] = useState("");
-  const [category, setCategory] = useState("Respiratory");
   const [specialty, setSpecialty] = useState<string>("Internal Medicine");
   const [tags, setTags] = useState<string[]>([]);
   const [restored, setRestored] = useState(false);
 
   const fillFrom = (e: RegistryEntry) => {
     setName(e.name); setAge(e.age); setSex(e.sex); setHospitalNo(e.hospitalNo);
-    setDiagnosis(e.diagnosis); setCategory(e.category); setSpecialty(e.specialty || "Internal Medicine");
+    setDiagnosis(e.diagnosis); setSpecialty(e.specialty || e.category || "Internal Medicine");
     setRestored(true);
   };
 
@@ -55,17 +54,14 @@ export default function AdmitDialog({ bedNo, initialHospNo, onClose, onAdmitted 
             <div><Label htmlFor="ad-age">Age</Label><Input id="ad-age" value={age} onChange={(e) => setAge(e.target.value)} placeholder="62" /></div>
             <div><Label htmlFor="ad-sex">Sex</Label><Select id="ad-sex" value={sex} onChange={(e) => setSex(e.target.value)}><option>M</option><option>F</option><option>Other</option></Select></div>
             <div><Label htmlFor="ad-hosp">Hospital No</Label><Input id="ad-hosp" value={hospitalNo} onChange={(e) => { setHospitalNo(e.target.value); setRestored(false); }} onBlur={onHospBlur} placeholder="H-00000" /></div>
-            <div><Label htmlFor="ad-cat">Category</Label><Select id="ad-cat" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {["Respiratory", "Sepsis", "Post-op", "Neuro", "Cardiac", "Other"].map((c) => <option key={c}>{c}</option>)}
-            </Select></div>
-            <div><Label htmlFor="ad-spec">Specialty (dashboard only)</Label><Select id="ad-spec" value={specialty} onChange={(e) => setSpecialty(e.target.value)}>
+            <div><Label htmlFor="ad-spec">Category</Label><Select id="ad-spec" value={specialty} onChange={(e) => setSpecialty(e.target.value)}>
               {SPECIALTIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </Select></div>
             <div className="sm:col-span-2"><Label htmlFor="ad-dx">Primary diagnosis</Label><Input id="ad-dx" value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} placeholder="e.g. Severe pneumonia" /></div>
             <div className="sm:col-span-2">
               <Label>Active tags</Label>
               <div className="mt-1 flex flex-wrap gap-2">
-                {TAG_OPTIONS.map((t) => {
+                {TAG_OPTIONS.filter((t) => t !== "Non-invasive" && t !== "Central Line").map((t) => {
                   const TIcon = tagIcon(t);
                   return (
                   <button key={t} type="button" onClick={() => toggle(t)}
@@ -81,7 +77,7 @@ export default function AdmitDialog({ bedNo, initialHospNo, onClose, onAdmitted 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button disabled={!name.trim() || !hospitalNo.trim()} onClick={() => {
-            ward.admit(bedNo, { name: name.trim(), age, sex: sex as any, hospitalNo: hospitalNo.trim(), diagnosis, category: category as any, specialty, tags });
+            ward.admit(bedNo, { name: name.trim(), age, sex: sex as any, hospitalNo: hospitalNo.trim(), diagnosis, category: specialty, specialty, tags });
             onAdmitted(bedNo);
           }}>Admit &amp; Open SBAR</Button>
         </DialogFooter>

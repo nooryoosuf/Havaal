@@ -25,8 +25,11 @@ export default function WardStats() {
     + Object.values(ward.patients as Record<string, any>).filter((p: any) => p.tags?.some((t: string) => /fall/i.test(t))).length;
   const delirium = sbarVals.filter((s) => s.deliriumRisk).length;
 
-  const cats: Record<string, number> = { Respiratory: 0, Sepsis: 0, "Post-op": 0, Neuro: 0, Cardiac: 0, Other: 0 };
-  for (const p of Object.values(ward.patients) as any[]) { cats[p.category ?? "Other"] = (cats[p.category ?? "Other"] ?? 0) + 1; }
+  const cats: Record<string, number> = {};
+  for (const p of Object.values(ward.patients) as any[]) {
+    const key = p.category || p.specialty || "Other";
+    cats[key] = (cats[key] ?? 0) + 1;
+  }
 
   const Stat = ({ icon, label, value, sub }: any) => (
     <GlowCard className="animate-fade-up"><Card><CardHeader className="pb-1"><CardTitle className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">{icon}{label}</CardTitle></CardHeader>
