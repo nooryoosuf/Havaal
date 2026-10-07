@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, Archive, BarChart3, BedDouble, DoorOpen, Trash2, Sparkles, X } from "lucide-react";
+import { Activity, Archive, BarChart3, BedDouble, DoorOpen, Trash2, Sparkles, Users, X } from "lucide-react";
 import { useWard } from "@/lib/store";
 import { STAFF_LIST } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import BedGrid from "@/components/bed-grid";
 import WardStats from "@/components/ward-stats";
 import HandoverArchive from "@/components/handover-archive";
 import Discharges from "@/components/discharges";
+import Workforce from "@/components/workforce";
 import SBARForm from "@/components/sbar-form";
 import PrintEngine from "@/components/print-engine";
 import ShiftHistoryDialog from "@/components/shift-history-dialog";
@@ -23,7 +24,7 @@ type View = { name: "dashboard" } | { name: "form"; bedNo: BedNo; stayId: string
 
 export default function HomePage() {
   const ward = useWard();
-  const [mainTab, setMainTab] = useState<"beds" | "stats" | "archive" | "discharges">("beds");
+  const [mainTab, setMainTab] = useState<"beds" | "stats" | "archive" | "workforce" | "discharges">("beds");
   const [view, setView] = useState<View>({ name: "dashboard" });
   const [printData, setPrintData] = useState<SBARData | null>(null);
   const [historyStay, setHistoryStay] = useState<{ stayId: string; bedNo: BedNo; name: string; hospitalNo: string } | null>(null);
@@ -67,7 +68,7 @@ export default function HomePage() {
           </div>
         </div>
         <nav className="mx-auto hidden max-w-7xl gap-1 px-4 pb-2 md:flex">
-          {([["beds", "Bed Dashboard"], ["stats", "Ward Statistics"], ["archive", "Handover Archive"], ["discharges", "Discharges"]] as const).map(([k, label]) => (
+          {([["beds", "Bed Dashboard"], ["stats", "Ward Statistics"], ["archive", "Handover Archive"], ["workforce", "Workforce"], ["discharges", "Discharges"]] as const).map(([k, label]) => (
             <button key={k} onClick={() => { setMainTab(k); setView({ name: "dashboard" }); }}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${mainTab === k ? "bg-cyan-600 text-white" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>
               {label}
@@ -98,6 +99,8 @@ export default function HomePage() {
           <WardStats />
         ) : mainTab === "discharges" ? (
           <Discharges onReadmit={(h) => { setPendingReadmit(h); setMainTab("beds"); setView({ name: "dashboard" }); }} />
+        ) : mainTab === "workforce" ? (
+          <Workforce />
         ) : (
           <HandoverArchive
             onView={(snap) => setArchivePrint(snap)}
@@ -108,8 +111,8 @@ export default function HomePage() {
 
       {/* Bottom navigation (mobile) */}
       <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/90 md:hidden">
-        <div className="grid grid-cols-4">
-          {([["beds", "Beds", BedDouble], ["stats", "Stats", BarChart3], ["archive", "Archive", Archive], ["discharges", "Out", DoorOpen]] as const).map(([k, label, Icon]) => {
+        <div className="grid grid-cols-5">
+          {([["beds", "Beds", BedDouble], ["stats", "Stats", BarChart3], ["archive", "Archive", Archive], ["workforce", "Staff", Users], ["discharges", "Out", DoorOpen]] as const).map(([k, label, Icon]) => {
             const active = mainTab === k;
             return (
               <button key={k} onClick={() => { setMainTab(k); setView({ name: "dashboard" }); }} aria-current={active ? "page" : undefined}

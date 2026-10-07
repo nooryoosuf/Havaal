@@ -163,6 +163,53 @@ export interface RegistryEntry {
   updatedAt: string; // ISO
 }
 
+// ---- Workforce / shift management (whiteboard) ----
+export type ShiftId = "morning" | "afternoon" | "night";
+
+export const SHIFTS: Array<{ id: ShiftId; label: string; short: string; timing: string }> = [
+  { id: "morning", label: "Morning", short: "Morning", timing: "07:30 – 15:30" },
+  { id: "afternoon", label: "Afternoon", short: "Afternoon", timing: "15:30 – 23:30" },
+  { id: "night", label: "Night", short: "Night", timing: "23:30 – 07:30" },
+];
+
+export function currentShift(): ShiftId {
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes() / 60;
+  if (h >= 7.5 && h < 15.5) return "morning";
+  if (h >= 15.5 && h < 23.5) return "afternoon";
+  return "night";
+}
+
+// Whiteboard grid: one editable list per (shift, column) cell.
+export type WorkCol = "staff" | "alloc" | "inventory" | "task" | "mo" | "attendant";
+
+export const WORK_COLS: Array<{ id: WorkCol; label: string }> = [
+  { id: "staff", label: "Staff" },
+  { id: "alloc", label: "Allocations" },
+  { id: "inventory", label: "Inventory" },
+  { id: "task", label: "Task" },
+  { id: "mo", label: "Medical Officer" },
+  { id: "attendant", label: "Attendant" },
+];
+
+export interface WorkCellItem {
+  id: string;
+  shift: ShiftId;
+  col: WorkCol;
+  text: string;
+  assignee?: string; // staff name this bed / inventory / task is assigned to
+}
+
+// One outlined row per staff member: their allocation, inventory and task.
+export interface WorkRow {
+  id: string;
+  shift: ShiftId;
+  staff: string;
+  alloc: string;
+  inventory: string;
+  task: string;
+}
+
 export const SPECIALTIES = [
   "Internal Medicine",
   "Pediatrics",
@@ -188,6 +235,8 @@ export const TAG_OPTIONS = [
 ] as const;
 
 export const STAFF_LIST = [
+  "SRN IHUSANA",
+  "CN ZIFANA",
   "SRN SHAZRA",
   "SRN MAUVA",
   "SRN RISHANA",

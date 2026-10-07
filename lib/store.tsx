@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { ALL_BEDS, BedNo, DischargeOutcome, DischargeRecord, HandoverRecord, Patient, RegistryEntry, SBARData, STAFF_LIST, emptySBAR, uid } from "@/lib/types";
+import { ALL_BEDS, BedNo, DischargeOutcome, DischargeRecord, HandoverRecord, Patient, RegistryEntry, SBARData, STAFF_LIST, ShiftId, WorkCellItem, WorkCol, WorkRow, emptySBAR, uid } from "@/lib/types";
 
 interface WardState {
   patients: Record<string, Patient>; // keyed by bedNo
@@ -9,11 +9,20 @@ interface WardState {
   handovers: HandoverRecord[];
   discharges: DischargeRecord[];
   registry: Record<string, RegistryEntry>; // keyed by hospitalNo — returning patients
+  wItems: WorkCellItem[];
   activeStaff: string;
   setActiveStaff: (s: string) => void;
   admit: (bedNo: BedNo, p: Omit<Patient, "id" | "stayId" | "admittedAt" | "bedNo">) => void;
   discharge: (bedNo: BedNo) => void;
   dischargePatient: (bedNo: BedNo, outcome: DischargeOutcome, note: string) => void;
+  addWItem: (it: Omit<WorkCellItem, "id">) => void;
+  updateWItem: (id: string, patch: { text?: string; assignee?: string }) => void;
+  removeWItem: (id: string) => void;
+  wRows: WorkRow[];
+  addWRow: (r: Omit<WorkRow, "id">) => void;
+  updateWRow: (id: string, patch: Partial<WorkRow>) => void;
+  removeWRow: (id: string) => void;
+  seedWorkCells: () => void;
   updatePatient: (bedNo: BedNo, patch: Partial<Patient>) => void;
   getSBAR: (stayId: string) => SBARData;
   saveSBAR: (stayId: string, data: SBARData) => void;
@@ -88,6 +97,8 @@ export function WardProvider({ children }: { children: React.ReactNode }) {
   const [activeStaff, setActiveStaff] = useState<string>(STAFF_LIST[0]);
   const [discharges, setDischarges] = useState<DischargeRecord[]>([]);
   const [registry, setRegistry] = useState<Record<string, RegistryEntry>>({});
+  const [wItems, setWItems] = useState<WorkCellItem[]>([]);
+  const [wRows, setWRows] = useState<WorkRow[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -100,6 +111,8 @@ export function WardProvider({ children }: { children: React.ReactNode }) {
         setHandovers(parsed.handovers ?? []);
         setDischarges(parsed.discharges ?? []);
         setRegistry(parsed.registry ?? {});
+        setWItems((parsed.wItems ?? []).filter((i: any) => i.col === "staff" || i.col === "mo" || i.col === "attendant"));
+        setWRows(parsed.wRows ?? migrateWorkRows(parsed.wItems ?? []));
         setActiveStaff(parsed.activeStaff ?? STAFF_LIST[0]);
       }
     } catch { /* ignore */ }
@@ -108,11 +121,68 @@ export function WardProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loaded) return;
-    localStorage.setItem(LS_KEY, JSON.stringify({ patients, sbarByStay, handovers, discharges, registry, activeStaff }));
-  }, [patients, sbarByStay, handovers, discharges, registry, activeStaff, loaded]);
+    localStorage.setItem(LS_KEY, JSON.stringify({ patients, sbarByStay, handovers, discharges, registry, wItems, wRows, activeStaff }));
+  }, [patients, sbarByStay, handovers, discharges, registry, wItems, wRows, activeStaff, loaded]);
 
-  const value = useMemo<WardState>(() => ({
-    patients, sbarByStay, handovers, discharges, registry, activeStaff, setActiveStaff,
+function migrateWorkRows(items: WorkCellItem[]): WorkRow[] {
+  try {
+    const groups = new Map<string, WorkRow>();
+    for (const it of items) {
+      if (it.col !== "alloc" && it.col !== "inventory" && it.col !== "task") continue;
+      const key = `${it.shift}|${it.assignee ?? ""}`;
+      let r = groups.get(key);
+      if (!r) {
+        r = { id: uid("wr"), shift: it.shift, staff: it.assignee ?? "", alloc: "", inventory: "", task: "" };
+        groups.set(key, r);
+      }
+      const field = it.col === "alloc" ? "alloc" : it.col === "inventory" ? "inventory" : "task";
+      const cur = r[field];
+      r[field] = cur ? `${cur}, ${it.text}` : it.text;
+    }
+    return Array.from(groups.values());
+  } catch { return []; }
+}
+
+function migrateWorkforce(parsed: any): WorkCellItem[] {
+  try {
+    const out: WorkCellItem[] = [];
+    const push = (shift: ShiftId, col: WorkCol, text: string) => {
+      const t = String(text ?? "").trim();
+      if (t) out.push({ id: uid("wc"), shift, col, text: t });
+    };
+    for (const s of (parsed?.wStaff ?? []) as any[])
+      push(s.shift, "staff", `${s.name ?? ""}${s.role ? ` — ${s.role}` : ""}${s.area ? ` (${s.area})` : ""}`);
+    for (const b of (parsed?.wBeds ?? []) as any[]) {
+      push(b.shift, "alloc", `${b.bedNo ?? ""}${b.patient ? `: ${b.patient}` : b.status ? ` — ${b.status}` : ""}${b.note ? ` (${b.note})` : ""}`);
+      if (b.medicalOfficer) push(b.shift, "mo", String(b.medicalOfficer));
+      if (b.attendant) push(b.shift, "attendant", String(b.attendant));
+    }
+    for (const t of (parsed?.wTasks ?? []) as any[])
+      push(t.shift, t.group === "MO" ? "mo" : "attendant", `${t.desc ?? ""}${t.assignee ? ` — ${t.assignee}` : ""}`);
+    for (const it of (parsed?.wInventory ?? []) as any[])
+      for (const sh of ["morning", "afternoon", "night"] as ShiftId[])
+        push(sh, "inventory", `${it.name ?? ""} — ${it.qty ?? ""} ${it.unit ?? ""}`.trim());
+    return out;
+  } catch { return []; }
+}
+
+const value = useMemo<WardState>(() => ({
+    patients, sbarByStay, handovers, discharges, registry, wItems, wRows, activeStaff, setActiveStaff,
+    addWItem: (it) => setWItems((prev) => [...prev, { ...it, id: uid("wc") }]),
+    updateWItem: (id, patch) => setWItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x))),
+    removeWItem: (id) => setWItems((prev) => prev.filter((x) => x.id !== id)),
+    addWRow: (r) => setWRows((prev) => [...prev, { ...r, id: uid("wr") }]),
+    updateWRow: (id, patch) => setWRows((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x))),
+    removeWRow: (id) => setWRows((prev) => prev.filter((x) => x.id !== id)),
+    seedWorkCells: () => {
+      const R = (shift: ShiftId, staff: string, alloc: string, inventory: string, task: string): WorkRow =>
+        ({ id: uid("wr"), shift, staff, alloc, inventory, task });
+      setWRows([
+        R("morning", "RN ANOOSHA", "Shift Incharge", "Narcotics", "Fridge Temp"),
+        R("morning", "SRN SHAZRA", "Bed 2 + 1st Adm", "-", "ICP"),
+        R("morning", "SRN MAUVA", "Bed 3 + HD", "Daily", "-"),
+      ]);
+    },
     admit: (bedNo, p) => {
       const stayId = uid("stay");
       const now = new Date().toISOString();
@@ -209,7 +279,7 @@ export function WardProvider({ children }: { children: React.ReactNode }) {
       setDischarges([]);
     },
     resetAll: () => { setPatients({}); setSbarByStay({}); setHandovers([]); setDischarges([]); setRegistry({}); },
-  }), [patients, sbarByStay, handovers, discharges, registry, activeStaff]);
+  }), [patients, sbarByStay, handovers, discharges, registry, wItems, wRows, activeStaff]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

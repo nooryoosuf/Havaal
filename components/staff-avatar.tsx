@@ -34,13 +34,19 @@ export function staffGradient(name: string): string {
 }
 
 export function staffRole(name: string): string {
+  const custom: Record<string, string> = {
+    "SRN IHUSANA": "Ward Manager",
+    "CN ZIFANA": "Asst. Ward Manager",
+  };
+  if (custom[name]) return custom[name];
   const parts = name.split("—");
   if (parts.length > 1) return parts[0].trim();
-  const m = name.trim().match(/^(SRN|RN|MO|DR)\b/i);
+  const m = name.trim().match(/^(SRN|RN|CN|MO|DR)\b/i);
   if (m) {
     const r = m[1].toUpperCase();
     if (r === "SRN") return "Senior Registered Nurse";
     if (r === "RN") return "Registered Nurse";
+    if (r === "CN") return "Charge Nurse";
     if (r === "MO") return "Medical Officer";
     return "Doctor";
   }
